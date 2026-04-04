@@ -1,0 +1,256 @@
+/Users/alenfaer/Technion/PROJECT/scripts/frontEnd/Test/wiener_hw_model.py:210: RuntimeWarning: overflow encountered in exp
+  alpha    = 1.0 / (1.0 + np.exp(-(sigma2_map - blend_thresh) / blend_soft))
+Loading image: /Users/alenfaer/Technion/PROJECT/scripts/frontEnd/Test/../../../images/test_7.jpg
+Image shape  : (512, 512)
+
+──────────────── Baseline (default params) ────────────────
+  True noise variance  : 1359.5292
+  Estimated noise var  : 1527.3754
+  SNR  (orig vs rest)  : 23.7245 dB
+  PSNR (orig vs rest)  : 19.4467 dB
+  SSIM                 : 0.6682
+
+[1/4] Latin Hypercube Sampling: 2000 points × 3 seeds
+      Explores the full 9-D parameter space efficiently.
+
+    100/2001  (  5.0%)  best so far: 24.5134 dB  ETA: 237s
+    200/2001  ( 10.0%)  best so far: 24.5134 dB  ETA: 222s
+    300/2001  ( 15.0%)  best so far: 24.5134 dB  ETA: 208s
+    400/2001  ( 20.0%)  best so far: 24.5134 dB  ETA: 195s
+    500/2001  ( 25.0%)  best so far: 24.5249 dB  ETA: 183s
+    600/2001  ( 30.0%)  best so far: 24.5249 dB  ETA: 170s
+    700/2001  ( 35.0%)  best so far: 24.5249 dB  ETA: 158s
+    800/2001  ( 40.0%)  best so far: 24.5249 dB  ETA: 146s
+    900/2001  ( 45.0%)  best so far: 24.5249 dB  ETA: 134s
+   1000/2001  ( 50.0%)  best so far: 24.5273 dB  ETA: 123s
+   1100/2001  ( 55.0%)  best so far: 24.5273 dB  ETA: 110s
+   1200/2001  ( 60.0%)  best so far: 24.5273 dB  ETA: 98s
+   1300/2001  ( 65.0%)  best so far: 24.5273 dB  ETA: 86s
+   1400/2001  ( 70.0%)  best so far: 24.5273 dB  ETA: 74s
+   1500/2001  ( 75.0%)  best so far: 24.5273 dB  ETA: 62s
+   1600/2001  ( 80.0%)  best so far: 24.5273 dB  ETA: 50s
+   1700/2001  ( 85.0%)  best so far: 24.5273 dB  ETA: 38s
+   1800/2001  ( 90.0%)  best so far: 24.5273 dB  ETA: 25s
+   1900/2001  ( 95.0%)  best so far: 24.5273 dB  ETA: 13s
+   2000/2001  (100.0%)  best so far: 24.5273 dB  ETA: 0s
+   2001/2001  (100.0%)  best so far: 24.5273 dB  ETA: 0s
+
+  LHS best  SNR: 24.5273 dB
+  At params: {'noise_var_scale': 1.1341779700183265, 'noise_var_bias': -101.09951353383838, 'immerkaer_sigma_thresh': 49.50166286116147, 'immerkaer_high_scale': 2.136372891996927, 'sigma2_bias': 1.0236157978916613, 'w_zero_thresh': 1.4949301259024943, 'w_min': 0.0327135539807163, 'w_power': 2.3368782145662683, 'correction_scale': 1.0167719196872633, 'blend_thresh': 1940.7317689878546, 'blend_soft': 307.0508649625809, 'residual_scale2': 0.912021691021051, 'local_clip_k': 0.27577183699595265}
+
+[2/4] Training MLP surrogate …
+  Surrogate R²        = 0.8318
+  Mean absolute error = 0.6503 dB
+
+[3/4] Global optimisation on surrogate (differential_evolution) …
+  Surrogate best predicted SNR : 28.9249 dB
+  At params: {'noise_var_scale': 1.900446470109877, 'noise_var_bias': 173.12444656115395, 'immerkaer_sigma_thresh': 18.79872800593393, 'immerkaer_high_scale': 1.4100410515345991, 'sigma2_bias': 49.99420869730335, 'w_zero_thresh': 1.026394068081921, 'w_min': 0.0, 'w_power': 2.8111796150004307, 'correction_scale': 1.3431372828626058, 'blend_thresh': 3835.486251971989, 'blend_soft': 327.98552382804405, 'residual_scale2': 2.8383475205348443, 'local_clip_k': 5.0}
+
+[4/4] Fine-tuning on real objective (Nelder-Mead) …
+
+══════════════════════════════════════════════════════════════
+  OPTIMISED PARAMETERS
+══════════════════════════════════════════════════════════════
+  noise_var_scale                    :    1.51027   (was 1.00000)
+  noise_var_bias                     :   53.26760   (was 0.00000)
+  immerkaer_sigma_thresh             :   42.62080   (was 20.00000)
+  immerkaer_high_scale               :    2.37914   (was 1.25000)
+  sigma2_bias                        :    2.12462   (was 0.00000)
+  w_zero_thresh                      :    1.49984   (was 0.92000)
+  w_min                              :    0.01455   (was 0.06250)
+  w_power                            :    2.99880   (was 1.00000)
+  correction_scale                   :    0.83465   (was 1.00000)
+  blend_thresh                       : 1904.93297   (was 9999.00000)
+  blend_soft                         :  296.36287   (was 100.00000)
+  residual_scale2                    :    0.95102   (was 0.00000)
+  local_clip_k                       :    0.67632   (was 0.00000)
+
+  ┌─ OPTIMISED EQUATIONS ──────────────────────────────────────────
+  │
+  │  [Immerkaer estimator]
+  │  noise_var_raw = sigma²               if sigma ≤ 42.62
+  │               = 2.3791 × sigma²     if sigma  > 42.62
+  │
+  │  [Noise variance loaded into hardware register]
+  │  noise_var = 1.5103 × noise_var_raw  +  53.27
+  │
+  │  [Local variance floor  (sigma2_safe)]
+  │  sigma2_safe = max(sigma2  +  2.12,  1/256)
+  │
+  │  [Ratio]
+  │  R = noise_var / sigma2_safe
+  │
+  │  [Weight  (mirrors w_fixed / w_clamped in wiener_core.sv)]
+  │  w_raw = 0                    if R ≥ 1.49984  (W_ZERO_Q16_16 = 98294)
+  │        = 1 - R                if R  < 1.49984
+  │  w     = max(w_raw ^ 2.9988,  0.01455)   (W_MIN_Q1_16 = 954)
+  │
+  │  [Reconstruction]
+  │  restored = mu  +  0.8347 × w × (noisy - mu)
+  │
+  │  [Enhancement 3 — correction clipped to ±0.6763×√noise_var]
+  │
+  │  [Enhancement 1 — adaptive 3×3/5×5 blend]
+  │  alpha = sigmoid((sigma2_5x5 − 1904.9) / 296.4)
+  │  final = (1−alpha)×restored_5x5  +  alpha×restored_3x3
+  │
+  │  [Enhancement 2 — two-pass residual re-estimation]
+  │  noise_var₂ = 0.9510 × immerkaer(noisy − restored₁)
+  │  then re-run the full filter with noise_var₂
+  └────────────────────────────────────────────────────────────────
+
+╔══════════════════════════════════════════════════════════════════╗
+║          HARDWARE FLOW REVIEW (wiener_top.sv / wiener_core.sv)  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+  Pipeline latency (L) = 4×512 + 13 = 2062 clock cycles
+  First valid output after L cycles from first in_valid.
+  Full frame: 512×512 + L = 264206 cycles  (0.264M cycles)
+
+──────────────────────────────────────────────────────────────────
+
+  [Enhancement 1 — Adaptive 3×3/5×5 Blend]  ACTIVE
+  Parameters: blend_thresh=1904.9  blend_soft=296.4
+
+  Current hardware behaviour:
+    stats_calc_5x5.sv selects 3×3 or 5×5 via the static `mode_3x3` input.
+    Only ONE set of stats (mu, var) is produced per pixel cycle.
+
+  Required hardware changes:
+    1. stats_calc_5x5.sv — duplicate the 3×3 accumulator path so BOTH
+       (mu_3x3, var_3x3) and (mu_5x5, var_5x5) are produced in parallel.
+       Cost: ~2× the adder tree for the inner 9-pixel subset (indices
+       6,7,8,11,12,13,16,17,18 — already selected by the mode_3x3 flag).
+       No new latency; runs inside the existing always_comb + 1-cycle register.
+
+    2. wiener_top.sv — instantiate a SECOND wiener_core (u_wiener_core_3x3)
+       fed with (mu_3x3, var_3x3) and the same noise_var_reg.
+       Both cores run in parallel; out_valid is the same for both
+       because they share the same pipeline stage.
+
+    3. wiener_top.sv — add blend mux after the two cores:
+         alpha_thresh = {blend_thresh as Q16.8 fixed-point constant}
+         blend = (var_q16_8_5x5 > alpha_thresh) ? wien_3x3 : wien_5x5
+       For a soft blend, replace the comparator with a fractional multiply
+       (requires one 8-bit × 8-bit multiply — cheap).
+
+  Clock synchronisation:
+    ✓ No extra pipeline stages required.
+    ✓ Both wiener_core outputs arrive at the SAME cycle (same latency).
+    ✓ The blend decision (var_q16_8 threshold) is computed in the same
+      always_ff block that already registers out_valid — add 0 cycles.
+    ✓ mode_3x3 input to stats_calc_5x5 can be repurposed as "force 3×3"
+      override for test/debug; normal operation ignores it.
+
+──────────────────────────────────────────────────────────────────
+
+  [Enhancement 2 — Two-Pass Residual Re-estimation]  ACTIVE
+  Parameters: residual_scale2=0.9510
+
+  Current hardware behaviour:
+    Single pass — in_valid stream → pipeline → out_valid stream.
+    noise_var_reg is loaded ONCE via cfg_en/cfg_data before the frame.
+
+  Required hardware changes:
+    1. Output frame buffer:  512×512×8 bits = 262144 bytes SRAM
+       (or DRAM) to store pass-1 output pixels.
+
+    2. Frame controller FSM (new top-level logic):
+       State PASS1: assert in_valid, write out_pixel to frame buffer.
+       State GAP  : deassert in_valid for at least 2048 cycles (line
+                    buffers must flush) OR assert rst_n briefly.
+       State CFG  : shift new noise_var into cfg register (24 cycles
+                    with cfg_en). The new value = immerkaer(residual)
+                    computed in SOFTWARE between the two passes.
+       State PASS2: re-assert in_valid, read pixels from frame buffer.
+
+    3. Software (Python / C driver) between passes:
+       a. Read all 262144 output pixels from the frame buffer.
+       b. Compute residual = noisy − pass1_output.
+       c. Run Immerkaer on residual → multiply by residual_scale2.
+       d. Serial-load 24-bit result via cfg_en / cfg_data.
+
+  Clock synchronisation:
+    ✓ Pass 1 finishes when out_valid deasserts after the last pixel.
+      Last out_valid = cycle (H×W + L − 1) from frame start.
+    ⚠ Gap between passes: in_valid must stay LOW for at least 4×512 = 2048
+      cycles to flush all four line-buffers completely.
+    ⚠ cfg_en loading takes 24 cycles and must complete BEFORE in_valid
+      for pass 2 is asserted (otherwise noise_var_reg is partial).
+    ✓ Once PASS2 in_valid starts, timing is identical to pass 1.
+    ✓ Total frame time: 2 × (262144 + L) + 2048 flush + 24 cfg cycles
+      = 530484 cycles  (0.530M cycles).
+
+──────────────────────────────────────────────────────────────────
+
+  [Enhancement 3 — Local Correction Clipping]  ACTIVE
+  Parameters: local_clip_k=0.6763
+
+  Current wiener_core.sv behaviour:
+    prod_q8_8 = w_clamped * diff_extended  (the correction term)
+    restored_full = mu_extended + prod_q8_8
+    (no limit on how large prod_q8_8 can be)
+
+  Required hardware changes — SMALLEST of the three enhancements:
+    Inside wiener_core.sv, after computing prod_q8_8, add:
+
+      logic signed [17:0] clip_limit;        // k * sqrt(noise_var)
+      // sqrt(noise_var) can be pre-computed in software and loaded
+      // via a second 16-bit shift register (cfg2_en / cfg2_data), OR
+      // approximated as noise_var_reg >> SHIFT_K for a power-of-2 factor.
+
+      assign clip_limit = CLIP_K_Q8_8;       // fixed constant if k is fixed
+
+      wire signed [17:0] prod_clipped;
+      assign prod_clipped =
+          (prod_q8_8 >  clip_limit) ?  clip_limit :
+          (prod_q8_8 < -clip_limit) ? -clip_limit :
+                                       prod_q8_8;
+
+      assign restored_full = mu_extended + prod_clipped;
+
+    Cost: 2 signed comparators + 2-to-1 mux (< 50 LUT equivalents).
+
+  Clock synchronisation:
+    ✓ Fully combinational — zero extra clock cycles.
+    ✓ Fits inside the existing always_comb path in wiener_core.sv.
+    ✓ No change to in_valid / out_valid timing at all.
+    ✓ If clip_limit is a loadable register (not hardcoded), load it via
+      a second shift register similar to noise_var_reg — also 24 bits.
+
+──────────────────────────────────────────────────────────────────
+
+  Summary: 3/3 enhancements active in the optimised solution.
+  → Enhancement 1 (blend) is ACTIVE: needs parallel stats + second wiener_core
+  → Enhancement 2 (2-pass) is ACTIVE: needs frame buffer + FSM + software loop
+  → Enhancement 3 (clip) is ACTIVE: trivial 2-comparator change in wiener_core.sv
+╚══════════════════════════════════════════════════════════════════╝
+
+
+  Hardware register suggestions:
+    noise_var_scale: 1.510272
+    noise_var_bias : 53.2676
+    immerkaer_sigma_thresh: 42.62
+    immerkaer_high_scale  : 2.3791
+    sigma2_bias: 2.1246
+    W_MIN_Q1_16  (replace 4096  in wiener_core.sv): 954
+    W_ZERO_Q16_16 (replace 60293 in wiener_core.sv): 98294
+    w_power: 2.9988
+    correction_scale: 0.8347
+
+  Quality metrics (seed=0):
+    SNR  : 23.7245 dB  →  24.6461 dB   (Δ=+0.9215)
+    PSNR : 19.4467 dB  →  20.4653 dB   (Δ=+1.0186)
+    SSIM : 0.6682     →  0.6975      (Δ=+0.0292)
+  (avg SNR over 3 seeds: 24.6138 dB)
+
+Plot saved → /Users/alenfaer/Technion/PROJECT/scripts/frontEnd/Test/optimization_result.png
+Traceback (most recent call last):
+  File "/Users/alenfaer/Technion/PROJECT/scripts/frontEnd/Test/optimize_params.py", line 745, in <module>
+    main()
+  File "/Users/alenfaer/Technion/PROJECT/scripts/frontEnd/Test/optimize_params.py", line 687, in main
+    sensitivity_plot(mlp, scaler, p_opt,
+  File "/Users/alenfaer/Technion/PROJECT/scripts/frontEnd/Test/optimize_params.py", line 590, in sensitivity_plot
+    axs[i].plot(sweep, y_sw)
+    ~~~^^^
+IndexError: index 9 is out of bounds for axis 0 with size 9

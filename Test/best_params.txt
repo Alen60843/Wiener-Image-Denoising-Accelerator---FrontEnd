@@ -1,0 +1,36 @@
+# Best parameters found by optimize_params.py
+# Image: ../../../images/test_7.jpg   SNR target: 14.0 dB
+
+# ── Raw parameter values ────────────────────────────────────
+noise_var_scale = 1.01375539
+noise_var_bias = -87.06967199
+immerkaer_sigma_thresh = 49.99994985
+immerkaer_high_scale = 2.49998722
+sigma2_bias = 18.80663890
+w_zero_thresh = 0.94149911
+w_min = 0.00147976
+w_power = 2.26343593
+correction_scale = 0.96530997
+
+# ── Optimised equations ─────────────────────────────────────
+noise_var = 1.0138 * immerkaer_estimate - 87.07
+sigma2_safe = max(sigma2 + 18.81, 1/256)
+R = noise_var / sigma2_safe
+w_raw = 0          if R >= 0.94150   (W_ZERO_Q16_16 = 61702)
+      = 1 - R      if R  < 0.94150
+w = max(w_raw ^ 2.2634, 0.00148)   (W_MIN_Q1_16 = 97)
+restored = mu + 0.9653 * w * (noisy - mu)
+
+# ── Hardware register suggestions ───────────────────────────
+# noise_var_scale = 1.013755
+# noise_var_bias  = -87.0697
+# immerkaer_sigma_thresh = 50.00
+# immerkaer_high_scale   = 2.5000
+# sigma2_bias = 18.8066
+# W_MIN_Q1_16  (replace 4096  in wiener_core.sv) = 97
+# W_ZERO_Q16_16 (replace 60293 in wiener_core.sv) = 61702
+# w_power = 2.2634
+# correction_scale = 0.9653
+
+# Results (seed=0):  SNR=23.9589 dB  PSNR=19.6125 dB  SSIM=0.6852
+# avg SNR over 3 seeds = 23.9314 dB
