@@ -208,7 +208,7 @@ parameter IMG_H = 512;
 
 ## Author
 
-**Alen Faer**  
+**Alen Faer, Tomer Beck**  
 Electrical & Computer Engineering  
 Technion – Israel Institute of Technology
 
