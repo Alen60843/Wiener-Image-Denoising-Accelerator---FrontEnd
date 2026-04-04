@@ -1,372 +1,215 @@
-# Wiener-Image-Denoising-Accelerator---FrontEnd
-Below is a **clean, professional `README.md` you can copy directly into your repository**.
-It explains the **full pipeline, files, dependencies, and how to run the system**. It also reflects the **actual structure of your project and scripts**.
+# Wiener Image Denoising Hardware Accelerator
+
+> **Streaming RTL accelerator for Wiener image denoising, with a full Python evaluation pipeline.**  
+> Built in SystemVerilog · Simulated with Icarus Verilog · Evaluated with scikit-image
 
 ---
 
-# Hardware Wiener Image Denoising Accelerator
+## What This Is
 
-This project implements a **streaming hardware accelerator for Wiener image denoising** using **SystemVerilog** with a **Python-based preprocessing and evaluation pipeline**.
+A hardware accelerator that filters noisy images using the **Wiener filter** — an optimal linear estimator under Gaussian noise. The system is fully pipelined and streaming, designed for real FPGA deployment.
 
-The system performs:
-
-1. Image preprocessing and noise injection
-2. Noise variance estimation
-3. Hardware simulation of a Wiener filter
-4. Image reconstruction from hardware output
-5. Quality evaluation (SNR, PSNR, SSIM)
-
-The pipeline integrates **Python image processing** with **RTL simulation using Icarus Verilog**.
+The project includes:
+- A complete RTL design in SystemVerilog (5×5 and 3×3 kernel modes)
+- A Python pipeline for preprocessing, noise injection, and quality evaluation
+- Fixed-point arithmetic with Q16.8 noise variance encoding
+- Edge-accurate output via symmetric reflection padding
 
 ---
 
-# Project Overview
+## Results
 
-The full processing flow:
+| Metric | Noisy Input | Restored (5×5) |
+|--------|-------------|----------------|
+| SNR    | 14.13 dB    | 24.72 dB       |
+| PSNR   | —           | 28.10 dB       |
+| SSIM   | —           | 0.91           |
 
+---
 
-Input Image
-     │
-     ▼
-img_to_hex.py
-(Convert image → grayscale → resize → add Gaussian noise)
-     │
-     ├── clean_image.hex
-     ├── noisy_image.hex
-     ├── clean_image.png
-     └── noisy_image.png
-     │
-     ▼
-Wiener_filter.py
-(estimate global noise variance)
-     │
-     ▼
-RTL Simulation (Icarus Verilog)
-     │
-     ├── output_pixels_5x5.txt
-     └── output_pixels_3x3.txt
-     │
-     ▼
-reconstruct_image.py
-(Rebuild images + compute metrics)
-     │
-     ├── restored_5x5.png
-     └── restored_3x3.png
+## Full Pipeline
 
+```mermaid
+flowchart TD
+    A[Input Image] --> B[img_to_hex.py\nGrayscale · Resize · Add Gaussian Noise]
+    B --> C1[clean_image.hex]
+    B --> C2[noisy_image.hex]
+    B --> C3[clean_image.png / noisy_image.png]
 
-# Repository Structure 
-```
-'frontEnd/'
-│
-├── run.py                     # Main automation script
-├── img_to_hex.py              # Image preprocessing + noise generation
-├── Wiener_filter.py           # Noise variance estimation
-├── reconstruct_image.py       # Rebuild images from hardware output
-├── reconstruct_image_rgb.py   # RGB reconstruction variant
-│
-├── rtl.f                      # RTL file list for compilation
-│
-├── tb_wiener_top.sv           # Testbench
-├── wiener_top.sv              # Top hardware module
-├── wiener_core.sv             # Wiener filter core
-├── stats_calc_5x5.sv          # Local statistics module
-├── window5x5.sv               # Sliding window generator
-├── vert_mux5.sv               # Vertical multiplexer
-├── col_reflect_block.sv       # Edge reflection logic
-├── delay_line.sv              # Line buffer implementation
-│
-├── clean_image.hex
-├── noisy_image.hex
-│
-├── output_pixels_5x5.txt
-├── output_pixels_3x3.txt
-│
-├── clean_image.png
-├── noisy_image.png
-│
-└── sim.out
+    C2 --> D[Wiener_filter.py\nEstimate Global Noise Variance σ²]
+    D --> E["iverilog + vvp\nRTL Compilation & Simulation\n+NOISE_VAR=σ²"]
+    C2 --> E
+
+    E --> F1[output_pixels_5x5.txt]
+    E --> F2[output_pixels_3x3.txt]
+
+    F1 --> G[reconstruct_image.py\nRebuild Image · Compute SNR/PSNR/SSIM]
+    F2 --> G
+
+    G --> H1[restored_5x5.png]
+    G --> H2[restored_3x3.png]
 ```
 
 ---
 
-# Requirements
+## Hardware Architecture
 
-## Python
+```mermaid
+flowchart TD
+    IN[Pixel Stream In] --> LB[Line Buffers\ndelay_line.sv]
+    LB --> RE[Edge Reflection\ncol_reflect_block.sv]
+    RE --> VM[Vertical Mux\nvert_mux5.sv]
+    VM --> WG[5×5 Sliding Window\nwindow5x5.sv]
+    WG --> SC[Local Statistics Calculator\nstats_calc_5x5.sv\nLocal mean μ · Local variance σ²_l]
+    SC --> WC[Wiener Core\nwiener_core.sv\nPixel-wise gain application]
+    WC --> OUT[Filtered Pixel Stream Out]
 
-Python 3.8+
+    NV[Noise Variance σ² — Q16.8\nfrom testbench] --> WC
+```
 
-Install dependencies:
+> The design is **fully streaming** — no frame buffering required at the filter stage. One pixel in, one pixel out after pipeline fill.
+
+---
+
+## Repository Structure
 
 ```
+frontEnd/
+├── run.py                    # Single command to run the entire pipeline
+│
+├── img_to_hex.py             # Preprocessing: grayscale, resize, noise injection
+├── Wiener_filter.py          # Noise variance estimation (Immerkær method)
+├── reconstruct_image.py      # Pixel stream → image + SNR/PSNR/SSIM
+├── reconstruct_image_rgb.py  # RGB reconstruction variant
+│
+├── rtl.f                     # RTL file list for iverilog
+│
+├── tb_wiener_top.sv          # Testbench: streams pixels, captures output
+├── wiener_top.sv             # Top-level RTL module
+├── wiener_core.sv            # Wiener gain computation
+├── stats_calc_5x5.sv         # Local mean and variance over 5×5 window
+├── window5x5.sv              # Sliding window generator
+├── vert_mux5.sv              # Row selection multiplexer
+├── col_reflect_block.sv      # Symmetric boundary extension
+└── delay_line.sv             # Shift-register line buffers
+```
+
+---
+
+## Quick Start
+
+**1. Install Python dependencies**
+
+```bash
 pip install numpy pillow opencv-python scikit-image
 ```
 
-Required libraries:
+**2. Install Icarus Verilog**
 
-* numpy
-* pillow
-* opencv-python
-* scikit-image
+```bash
+# Ubuntu/Debian
+sudo apt install iverilog
 
----
+# macOS
+brew install icarus-verilog
 
-## RTL Simulation
-
-Install **Icarus Verilog**.
-
-Check installation:
-
-```
+# Verify
 iverilog -V
 ```
 
-The project uses:
+**3. Run the full pipeline**
 
-```
-SystemVerilog 2012
-```
-
----
-
-# Quick Start (Recommended)
-
-Run the entire pipeline with a single command:
-
-```
+```bash
 python run.py --img ../../images/test1.jpg --size 512 --snr 14
 ```
 
-This command performs:
-
-1. Image preprocessing
-2. Noise generation
-3. Noise variance estimation
-4. RTL compilation
-5. Hardware simulation
-6. Image reconstruction
-7. Quality metric evaluation
+This single command handles everything: preprocessing → RTL compile → simulation → reconstruction → metrics.
 
 ---
 
-# Step-by-Step Pipeline
+## Step-by-Step (Manual)
 
-## Step 1 — Convert Image to HEX
-
-```
-python img_to_hex.py input_image.jpg --size 512 --snr 20
-```
-
-Outputs:
-
-```
-clean_image.hex
-noisy_image.hex
-clean_image.png
-noisy_image.png
+**Step 1 — Preprocess image**
+```bash
+python img_to_hex.py input.jpg --size 512 --snr 20
+# Outputs: clean_image.hex, noisy_image.hex, clean_image.png, noisy_image.png
 ```
 
-The script:
-
-* converts the image to grayscale
-* resizes it to the specified size
-* injects Gaussian noise based on the desired SNR
-* exports pixel values for hardware simulation
-
----
-
-## Step 2 — Estimate Noise Variance
-
-The noise variance is estimated using:
-
-```
-estimate_noise_var_immerkaer()
+**Step 2 — Estimate noise variance**
+```bash
+python Wiener_filter.py
+# Example output: Estimated noise variance = 873.73
 ```
 
-This value is used to configure the Wiener filter hardware.
-
-Example output:
-
-```
-Estimated noise variance = 873.73
-```
-
----
-
-## Step 3 — Compile Hardware
-
-RTL modules are compiled using:
-
-```
+**Step 3 — Compile RTL**
+```bash
 iverilog -g 2012 -o sim.out -f rtl.f
 ```
 
-The `rtl.f` file lists all required SystemVerilog modules.
-
----
-
-## Step 4 — Run Simulation
-
-```
-vvp sim.out +NOISE_VAR=<variance>
-```
-
-Example:
-
-```
+**Step 4 — Run simulation**
+```bash
 vvp sim.out +NOISE_VAR=873.7
+# Outputs: output_pixels_5x5.txt, output_pixels_3x3.txt
 ```
 
-The testbench:
-
-* loads noisy image pixels
-* streams them into the Wiener filter
-* produces filtered outputs
-
-Two hardware modes are simulated:
-
-* **5×5 Wiener filter**
-* **3×3 statistics mode**
-
-Outputs:
-
-```
-output_pixels_5x5.txt
-output_pixels_3x3.txt
+**Step 5 — Reconstruct and evaluate**
+```bash
+python reconstruct_image.py --file output_pixels_5x5.txt --out_img restored_5x5.png --size 512
+python reconstruct_image.py --file output_pixels_3x3.txt --out_img restored_3x3.png --size 512
 ```
 
 ---
 
-## Step 5 — Reconstruct Output Images
+## Fixed-Point Arithmetic
+
+Noise variance is passed to hardware in **Q16.8 fixed-point format**:
 
 ```
-python reconstruct_image.py \
---file output_pixels_5x5.txt \
---out_img restored_5x5.png \
---size 512
+noise_var_q16_8 = round(σ² × 256)
 ```
 
-And:
-
-```
-python reconstruct_image.py \
---file output_pixels_3x3.txt \
---out_img restored_3x3.png \
---size 512
-```
-
-The script converts the pixel stream back into an image.
+This gives 8 bits of fractional precision with a representable range of 0 to 65535.996.
 
 ---
 
-# Image Quality Metrics
-
-The reconstruction script can compute:
-
-### SNR
+## Quality Metrics
 
 ```
-SNR = 10 log10( Σ f(x,y)^2 / Σ (f(x,y) − f̂(x,y))^2 )
-```
+SNR  = 10 · log₁₀( Σ f² / Σ (f − f̂)² )
 
-### PSNR
+PSNR = 10 · log₁₀( 255² / MSE )
 
-```
-PSNR = 10 log10( MAX_I^2 / Σ (f − f̂)^2 )
-```
-
-### SSIM
-
-Computed using `skimage.metrics`.
-
-Example output:
-
-```
-SNR (original vs noisy)    = 14.13 dB
-SNR (original vs restored) = 24.72 dB
-PSNR (original vs restored)= 28.10 dB
-SSIM (original vs restored)= 0.91
+SSIM = skimage.metrics.structural_similarity(f, f̂)
 ```
 
 ---
 
-# Image Size
+## Configuration
 
-The system currently assumes:
+The RTL is parameterized for `512 × 512` images by default.  
+To change image size, update these parameters in `tb_wiener_top.sv`:
 
-```
-512 × 512 images
-```
-
-The size must match the RTL parameters:
-
-```
-IMG_W = 512
-IMG_H = 512
-```
-
-If you change image size, you must update:
-
-```
-tb_wiener_top.sv
+```systemverilog
+parameter IMG_W = 512;
+parameter IMG_H = 512;
 ```
 
 ---
 
-# Fixed-Point Format
+## Roadmap
 
-Noise variance is provided to hardware using **Q16.8 format**.
-
-Conversion used in the testbench:
-
-```
-noise_var_q16_8 = round(noise_variance * 256)
-```
+- [ ] Dynamic image size via top-level parameters (no testbench edit required)
+- [ ] FPGA synthesis flow (Vivado / Quartus)
+- [ ] Throughput and resource utilization benchmarks
+- [ ] RGB / multi-channel support
+- [ ] Automated regression test suite
 
 ---
 
-# Hardware Architecture
+## Author
 
-The Wiener accelerator pipeline includes:
-
-```
-Line Buffers
-     │
-Reflection Logic
-     │
-5×5 Window Generator
-     │
-Local Statistics Calculator
-     │
-Wiener Core
-     │
-Output Pixel Stream
-```
-
-The design is **fully streaming and pipelined**.
-
----
-
-# Possible Improvements
-
-Future extensions:
-
-* dynamic image size configuration
-* FPGA synthesis
-* throughput benchmarking
-* multi-frame processing
-* color image support
-* automated regression testing
-
----
-
-# Author
-
-Alen Faer
+**Alen Faer**  
+Electrical & Computer Engineering  
 Technion – Israel Institute of Technology
-Electrical & Computer Engineering
 
-Project: Hardware Acceleration for Wiener Image Denoising
-
----
-
-If you'd like, I can also generate a **much cleaner "GitHub-polished" README** (with diagrams of your pipeline and hardware architecture). That version makes the repo look **much stronger to recruiters or research labs**.
+*Project: Hardware Acceleration for Wiener Image Denoising*
