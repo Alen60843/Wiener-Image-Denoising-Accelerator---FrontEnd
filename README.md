@@ -58,8 +58,8 @@ flowchart TD
 flowchart TD
     IN[Pixel Stream In] --> LB[Line Buffers\ndelay_line.sv]
     LB --> RE[Edge Reflection\ncol_reflect_block.sv]
-    RE --> VM[Vertical Mux\nvert_mux5.sv]
-    VM --> WG[5×5 Sliding Window\nwindow5x5.sv]
+    RE --> WG[5×5 Sliding Window\nwindow5x5.sv]
+    VM --> VM[Vertical Mux\nvert_mux5.sv]
     WG --> SC[Local Statistics Calculator\nstats_calc_5x5.sv\nLocal mean μ · Local variance σ²_l]
     SC --> WC[Wiener Core\nwiener_core.sv\nPixel-wise gain application]
     WC --> OUT[Filtered Pixel Stream Out]
